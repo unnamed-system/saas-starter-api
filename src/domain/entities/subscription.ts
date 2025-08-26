@@ -1,3 +1,4 @@
+import { ESubscriptionStatus } from '@domain/enums/ESubscriptionStatus';
 import {
 	Column,
 	CreateDateColumn,
@@ -11,13 +12,6 @@ import {
 import { Customer } from './customer';
 import { Payment } from './payment';
 import { Plan } from './plan';
-
-export enum ESubscriptionStatus {
-	ACTIVE = 'active',
-	CANCELED = 'canceled',
-	EXPIRED = 'expired',
-	PAST_DUE = 'past_due',
-}
 
 @Entity('subscriptions')
 export class Subscription {
@@ -37,15 +31,20 @@ export class Subscription {
 	})
 	status: ESubscriptionStatus;
 
-	@Column({
-		type: 'timestamptz',
-		name: 'start_date',
-		default: new Date(),
-	})
+	@Column({ type: 'bool', default: true })
+	renewal: boolean;
+
+	@Column({ name: 'start_date', type: 'timestamptz', default: new Date() })
 	startDate: Date;
 
-	@Column({ type: 'timestamptz', name: 'end_date', nullable: true })
+	@Column({ name: 'end_date', type: 'timestamptz', nullable: true })
 	endDate?: Date;
+
+	@Column({ name: 'canceled_at', type: 'timestamptz', nullable: true })
+	canceledAt?: Date;
+
+	@Column({ name: 'trial_ends_at', type: 'timestamptz', nullable: true })
+	trialEndsAt?: Date;
 
 	@Column({ name: 'external_id', nullable: true })
 	externalId?: string;
@@ -65,5 +64,6 @@ export class Subscription {
 	customer: Customer;
 
 	@ManyToOne(() => Plan, (plan) => plan.subscriptions)
+	@JoinColumn({ name: 'plan_id', referencedColumnName: 'id' })
 	plan: Plan;
 }

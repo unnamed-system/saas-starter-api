@@ -12,7 +12,7 @@ export class CustomerController {
 	}
 
 	@Post()
-	public create(@Body() data: CreateCustomerDto) {
+	public create(@Body() data: Omit<CreateCustomerDto, 'status'>) {
 		return this.customerService.create(data);
 	}
 }

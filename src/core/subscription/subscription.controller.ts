@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Inject, Post } from '@nestjs/common';
+import {
+	Body,
+	Controller,
+	Get,
+	Inject,
+	Param,
+	ParseUUIDPipe,
+	Post,
+} from '@nestjs/common';
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
 import { SubscriptionService } from './subscription.service';
 
@@ -11,8 +19,13 @@ export class SubscriptionController {
 		return this.subscriptionService.find();
 	}
 
-	@Post()
-	public create(@Body() data: CreateSubscriptionDto) {
-		return this.subscriptionService.create(data);
+	@Post('upgrade')
+	public upgrade(@Body() data: CreateSubscriptionDto) {
+		return this.subscriptionService.upgrade(data);
+	}
+
+	@Post('cancel/:id')
+	public cancel(@Param('id', ParseUUIDPipe) id: string) {
+		return this.subscriptionService.cancel(id);
 	}
 }

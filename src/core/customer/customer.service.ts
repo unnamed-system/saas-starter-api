@@ -7,6 +7,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, Repository } from 'typeorm';
 import { CreateCustomerDto } from './dto/create-customer.dto';
+import { UpdateCustomerDto } from './dto/update-customer.dto';
 
 @Injectable()
 export class CustomerService {
@@ -57,10 +58,10 @@ export class CustomerService {
 		return customer;
 	}
 
-	public async changeSubscription(customerId: string, subscriptionId: string) {
-		const customer = await this.findOne({ id: customerId });
+	public async update(id: string, data: UpdateCustomerDto) {
+		const customer = await this.findOne({ id });
 
-		customer.subscriptionId = subscriptionId;
+		this.repository.merge(customer, data);
 		await this.repository.save(customer);
 	}
 }

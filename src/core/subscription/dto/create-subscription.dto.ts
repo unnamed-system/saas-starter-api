@@ -1,4 +1,5 @@
 import { EPaymentMethod } from '@domain/enums/EPaymentMethod';
+import { ESubscriptionStatus } from '@domain/enums/ESubscriptionStatus';
 import {
 	IsDateString,
 	IsEnum,
@@ -16,15 +17,23 @@ export class CreateSubscriptionDto {
 	@IsInt()
 	planId: number;
 
-	@IsOptional()
-	@IsDateString()
-	startDate?: Date;
-
 	@IsNotEmpty()
 	@IsEnum(EPaymentMethod)
 	method: EPaymentMethod;
 
 	@IsOptional()
+	@IsEnum(ESubscriptionStatus)
+	status: ESubscriptionStatus;
+
+	@IsOptional()
+	@IsDateString()
+	startDate?: Date;
+
+	@IsOptional()
 	@IsDateString()
 	endDate?: Date;
+
+	@IsOptional()
+	@IsDateString()
+	trialEndsAt?: Date;
 }
