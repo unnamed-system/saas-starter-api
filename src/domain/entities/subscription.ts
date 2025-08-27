@@ -43,9 +43,6 @@ export class Subscription {
 	@Column({ name: 'canceled_at', type: 'timestamptz', nullable: true })
 	canceledAt?: Date;
 
-	@Column({ name: 'trial_ends_at', type: 'timestamptz', nullable: true })
-	trialEndsAt?: Date;
-
 	@Column({ name: 'external_id', nullable: true })
 	externalId?: string;
 

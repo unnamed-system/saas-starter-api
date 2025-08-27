@@ -31,9 +31,6 @@ export class Customer {
 	@Column({ name: 'subscription_id', type: 'uuid', nullable: true })
 	subscriptionId?: string;
 
-	@Column({ name: 'trial_used', type: 'bool', default: false })
-	trialUsed: boolean;
-
 	@CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
 	createdAt: Date;
 

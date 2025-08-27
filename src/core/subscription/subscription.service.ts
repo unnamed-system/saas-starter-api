@@ -13,8 +13,7 @@ import {
 	NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { addDays } from 'date-fns';
-import { In, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
 
 @Injectable()
@@ -31,19 +30,8 @@ export class SubscriptionService {
 	}
 
 	public async upgrade(data: CreateSubscriptionDto) {
-		const trialUsed = await this.handleActiveTrial(data.customerId);
-
-		if (!trialUsed) {
-			console.log('entroua qui');
-			data.status = ESubscriptionStatus.TRIALING;
-			data.startDate = addDays(new Date(), 8);
-			data.trialEndsAt = addDays(new Date(), 7);
-		}
-
 		await this.handleActiveSubscription(data.customerId);
-
 		const subscription = await this.createSubscription(data);
-
 		await this.createInitialPayment(subscription, data.method);
 		await this.customerService.update(data.customerId, {
 			subscriptionId: subscription.id,
@@ -66,17 +54,6 @@ export class SubscriptionService {
 		return this.repository.save(subscription);
 	}
 
-	private async handleActiveTrial(customerId: string) {
-		const customer = await this.customerService.findOne({ id: customerId });
-
-		if (!customer.trialUsed) {
-			await this.customerService.update(customerId, { trialUsed: true });
-			return false;
-		}
-
-		return customer.trialUsed;
-	}
-
 	private async handleActiveSubscription(customerId: string) {
 		const activeSubscription = await this.repository.findOne({
 			where: { customerId, status: ESubscriptionStatus.ACTIVE },
@@ -92,11 +69,9 @@ export class SubscriptionService {
 	private async createSubscription(
 		data: CreateSubscriptionDto,
 	): Promise<Subscription> {
-		const activeSubscription = await this.repository.findOne({
-			where: {
-				customerId: data.customerId,
-				status: In([ESubscriptionStatus.TRIALING, ESubscriptionStatus.ACTIVE]),
-			},
+		const activeSubscription = await this.repository.findOneBy({
+			customerId: data.customerId,
+			status: ESubscriptionStatus.ACTIVE,
 		});
 
 		if (activeSubscription) {
@@ -104,6 +79,7 @@ export class SubscriptionService {
 				'Já existe uma assinatura em andamento para este cliente.',
 			);
 		}
+
 		const subscription = this.repository.create(data);
 
 		return this.repository.save(subscription);

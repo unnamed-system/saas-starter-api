@@ -32,8 +32,4 @@ export class CreateSubscriptionDto {
 	@IsOptional()
 	@IsDateString()
 	endDate?: Date;
-
-	@IsOptional()
-	@IsDateString()
-	trialEndsAt?: Date;
 }

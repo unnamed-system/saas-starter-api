@@ -1,4 +1,4 @@
-import { IsBoolean, IsEmail, IsOptional, IsUUID } from 'class-validator';
+import { IsEmail, IsOptional, IsUUID } from 'class-validator';
 
 export class UpdateCustomerDto {
 	@IsOptional()
@@ -17,8 +17,4 @@ export class UpdateCustomerDto {
 	@IsOptional()
 	@IsUUID('4')
 	subscriptionId?: string;
-
-	@IsOptional()
-	@IsBoolean()
-	trialUsed?: boolean;
 }
