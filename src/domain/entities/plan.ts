@@ -22,7 +22,7 @@ export class Plan {
 	@Column({ type: 'enum', enum: EPlanCycle })
 	cycle: EPlanCycle;
 
-	@Column({ type: 'decimal' })
+	@Column({ type: 'decimal', precision: 10, scale: 2, default: 0.0 })
 	amount: number;
 
 	@Column({ type: 'bool', default: true })

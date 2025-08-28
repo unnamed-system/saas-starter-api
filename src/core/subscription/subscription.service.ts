@@ -13,7 +13,9 @@ import {
 	NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { addDays, isBefore } from 'date-fns';
 import { Repository } from 'typeorm';
+import { ChangePlanDto } from './dto/change-plan.dto';
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
 
 @Injectable()
@@ -29,48 +31,9 @@ export class SubscriptionService {
 		return this.repository.find();
 	}
 
-	public async upgrade(data: CreateSubscriptionDto) {
-		await this.handleActiveSubscription(data.customerId);
-		const subscription = await this.createSubscription(data);
-		await this.createInitialPayment(subscription, data.method);
-		await this.customerService.update(data.customerId, {
-			subscriptionId: subscription.id,
-		});
-
-		return subscription;
-	}
-
-	public async cancel(id: string) {
-		const subscription = await this.repository.findOneBy({ id });
-
-		if (!subscription) {
-			throw new NotFoundException('Assinatura não encontrada.');
-		}
-
-		this.repository.merge(subscription, {
-			renewal: false,
-			canceledAt: new Date(),
-		});
-		return this.repository.save(subscription);
-	}
-
-	private async handleActiveSubscription(customerId: string) {
-		const activeSubscription = await this.repository.findOne({
-			where: { customerId, status: ESubscriptionStatus.ACTIVE },
-		});
-
-		if (activeSubscription) {
-			activeSubscription.status = ESubscriptionStatus.CANCELED;
-			activeSubscription.endDate = new Date();
-			await this.repository.save(activeSubscription);
-		}
-	}
-
-	private async createSubscription(
-		data: CreateSubscriptionDto,
-	): Promise<Subscription> {
+	public async create(customerId: string, data: CreateSubscriptionDto) {
 		const activeSubscription = await this.repository.findOneBy({
-			customerId: data.customerId,
+			customerId,
 			status: ESubscriptionStatus.ACTIVE,
 		});
 
@@ -80,28 +43,89 @@ export class SubscriptionService {
 			);
 		}
 
-		const subscription = this.repository.create(data);
+		const subscription = this.repository.create({ ...data, customerId });
+		await this.repository.save(subscription);
 
-		return this.repository.save(subscription);
+		await this.createInitialPayment(subscription, data.method);
+
+		return subscription;
+	}
+
+	public async changePlan(customerId: string, data: ChangePlanDto) {
+		const activeSubscription = await this.repository.findOneBy({
+			customerId,
+			status: ESubscriptionStatus.ACTIVE,
+		});
+
+		if (!activeSubscription) {
+			throw new BadRequestException('Não possui assinatura ativa para trocar.');
+		}
+
+		const [{ method }, oldPlan, newPlan] = await Promise.all([
+			this.paymentService.findOne({
+				subscriptionId: activeSubscription.id,
+			}),
+			this.planService.findOne({
+				id: activeSubscription.planId,
+			}),
+			this.planService.findOne({
+				id: data.planId,
+			}),
+		]);
+
+		const now = new Date();
+		const oldStartAt = activeSubscription.startAt;
+
+		const oldEndOfCycle = this.calculatedueAt(oldStartAt, oldPlan.cycle);
+		const totalDays =
+			(oldEndOfCycle.getTime() - oldStartAt.getTime()) / (1000 * 60 * 60 * 24);
+
+		const remainingDays =
+			(oldEndOfCycle.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
+
+		const credit = (oldPlan.amount / totalDays) * remainingDays;
+		const newPlanAmount = newPlan.amount;
+		const valueToCharge =
+			Math.round(Math.max(newPlanAmount - credit, 0) * 100) / 100;
+		const discount = Math.round(Math.max(credit, 0) * 100) / 100;
+
+		this.repository.merge(activeSubscription, {
+			startAt: new Date(),
+			planId: data.planId,
+		});
+		await this.repository.save(activeSubscription);
+
+		await this.paymentService.create({
+			subscriptionId: activeSubscription.id,
+			method,
+			value: valueToCharge,
+			discount,
+			status: EPaymentStatus.PENDING,
+			dueAt: oldEndOfCycle,
+			notes: 'Troca de plano requisitada pelo usuário',
+		});
+
+		return activeSubscription;
 	}
 
 	private async createInitialPayment(
 		subscription: Subscription,
 		method: EPaymentMethod,
+		value?: number,
 	) {
 		const plan = await this.planService.findOne({ id: subscription.planId });
 
 		await this.paymentService.create({
 			subscriptionId: subscription.id,
 			method,
-			value: plan.amount,
+			value: value ?? plan.amount,
 			status: EPaymentStatus.PENDING,
-			dueDate: this.calculateDueDate(subscription.startDate, plan.cycle),
+			dueAt: this.calculatedueAt(subscription.startAt, plan.cycle),
 		});
 	}
 
-	private calculateDueDate(startDate: Date, cycle: EPlanCycle): Date {
-		const due = new Date(startDate);
+	private calculatedueAt(startAt: Date, cycle: EPlanCycle): Date {
+		const due = new Date(startAt);
 		switch (cycle) {
 			case EPlanCycle.WEEKLY:
 				due.setDate(due.getDate() + 7);
@@ -114,5 +138,58 @@ export class SubscriptionService {
 				break;
 		}
 		return due;
+	}
+
+	public async cancel(customerId: string) {
+		const subscription = await this.repository.findOneBy({
+			customerId,
+			status: ESubscriptionStatus.ACTIVE,
+		});
+
+		if (!subscription) {
+			throw new NotFoundException('Você não possui assinatura ativa.');
+		}
+
+		this.repository.merge(subscription, {
+			renewal: false,
+			canceledAt: new Date(),
+		});
+		return this.repository.save(subscription);
+	}
+
+	public async refund(id: string) {
+		const subscription = await this.repository.findOneBy({ id });
+
+		if (!subscription) {
+			throw new NotFoundException('Assinatura não encontrada.');
+		}
+
+		const refundDeadline = addDays(subscription.startAt, 7);
+		const now = new Date();
+
+		if (
+			!isBefore(now, refundDeadline) &&
+			now.getTime() !== refundDeadline.getTime()
+		) {
+			throw new BadRequestException(
+				'O período de 7 dias para solicitar reembolso já encerrou.',
+			);
+		}
+
+		this.repository.merge(subscription, {
+			renewal: false,
+			canceledAt: now,
+			status: ESubscriptionStatus.CANCELED,
+			endAt: now,
+		});
+
+		await this.repository.save(subscription);
+
+		const payment = await this.paymentService.findOne({ subscriptionId: id });
+		await this.paymentService.update(payment.id, {
+			status: EPaymentStatus.REFUNDED,
+			refundedAt: new Date(),
+			notes: 'Reembolso solicitado pelo usuário',
+		});
 	}
 }

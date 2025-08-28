@@ -5,7 +5,7 @@ import {
 	IsDecimal,
 	IsEnum,
 	IsNotEmpty,
-	IsNumber,
+	IsOptional,
 	IsUUID,
 } from 'class-validator';
 
@@ -18,9 +18,12 @@ export class CreatePaymentDto {
 	@IsEnum(EPaymentMethod)
 	method: EPaymentMethod;
 
-	@IsNumber()
 	@IsDecimal()
 	value: number;
+
+	@IsOptional()
+	@IsDecimal()
+	discount?: number;
 
 	@IsNotEmpty()
 	@IsEnum(EPaymentStatus)
@@ -28,5 +31,8 @@ export class CreatePaymentDto {
 
 	@IsNotEmpty()
 	@IsDateString()
-	dueDate: Date;
+	dueAt: Date;
+
+	@IsOptional()
+	notes?: string;
 }

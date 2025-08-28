@@ -1,6 +1,7 @@
 import {
 	Column,
 	CreateDateColumn,
+	DeleteDateColumn,
 	Entity,
 	OneToMany,
 	PrimaryGeneratedColumn,
@@ -37,7 +38,7 @@ export class Customer {
 	@UpdateDateColumn({ name: 'updated_at', type: 'timestamptz' })
 	updatedAt: Date;
 
-	@UpdateDateColumn({ name: 'deleted_at', type: 'timestamptz', nullable: true })
+	@DeleteDateColumn({ name: 'deleted_at', type: 'timestamptz', nullable: true })
 	deletedAt?: Date;
 
 	// Relations

@@ -28,14 +28,20 @@ export class Payment {
 	})
 	method: EPaymentMethod;
 
-	@Column({ name: 'due_date', nullable: true, type: 'timestamptz' })
-	dueDate?: Date;
+	@Column({ name: 'due_at', nullable: true, type: 'timestamptz' })
+	dueAt?: Date;
 
-	@Column({ name: 'payment_date', nullable: true, type: 'timestamptz' })
-	paymentDate?: Date;
+	@Column({ name: 'paid_at', nullable: true, type: 'timestamptz' })
+	paidAt?: Date;
 
-	@Column({ type: 'decimal' })
+	@Column({ name: 'refunded_at', nullable: true, type: 'timestamptz' })
+	refundedAt?: Date;
+
+	@Column({ type: 'decimal', precision: 10, scale: 2, default: 0.0 })
 	value: number;
+
+	@Column({ type: 'decimal', precision: 10, scale: 2, default: 0.0 })
+	discount: number;
 
 	@Column({
 		type: 'enum',
@@ -57,7 +63,6 @@ export class Payment {
 	updatedAt: Date;
 
 	// Relations
-
 	@ManyToOne(() => Subscription, (subscription) => subscription.payments)
 	@JoinColumn({ name: 'subscription_id', referencedColumnName: 'id' })
 	subscription: Subscription;

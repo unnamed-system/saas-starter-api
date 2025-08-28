@@ -34,11 +34,11 @@ export class Subscription {
 	@Column({ type: 'bool', default: true })
 	renewal: boolean;
 
-	@Column({ name: 'start_date', type: 'timestamptz', default: new Date() })
-	startDate: Date;
+	@Column({ name: 'start_at', type: 'timestamptz', default: new Date() })
+	startAt: Date;
 
-	@Column({ name: 'end_date', type: 'timestamptz', nullable: true })
-	endDate?: Date;
+	@Column({ name: 'end_at', type: 'timestamptz', nullable: true })
+	endAt?: Date;
 
 	@Column({ name: 'canceled_at', type: 'timestamptz', nullable: true })
 	canceledAt?: Date;

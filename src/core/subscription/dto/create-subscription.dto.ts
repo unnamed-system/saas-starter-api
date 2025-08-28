@@ -6,13 +6,8 @@ import {
 	IsInt,
 	IsNotEmpty,
 	IsOptional,
-	IsUUID,
 } from 'class-validator';
 export class CreateSubscriptionDto {
-	@IsNotEmpty()
-	@IsUUID('4')
-	customerId: string;
-
 	@IsNotEmpty()
 	@IsInt()
 	planId: number;
@@ -27,9 +22,9 @@ export class CreateSubscriptionDto {
 
 	@IsOptional()
 	@IsDateString()
-	startDate?: Date;
+	startAt?: Date;
 
 	@IsOptional()
 	@IsDateString()
-	endDate?: Date;
+	endAt?: Date;
 }
