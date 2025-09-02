@@ -3,6 +3,7 @@ import {
 	CreateDateColumn,
 	DeleteDateColumn,
 	Entity,
+	JoinColumn,
 	OneToMany,
 	PrimaryGeneratedColumn,
 	UpdateDateColumn,
@@ -43,5 +44,6 @@ export class Customer {
 
 	// Relations
 	@OneToMany(() => Subscription, (subscription) => subscription.customer)
+	@JoinColumn({ name: 'subscription_id', referencedColumnName: 'id' })
 	subscriptions: Subscription[];
 }

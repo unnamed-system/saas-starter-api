@@ -1,4 +1,5 @@
 import { Payment } from '@domain/entities/payment';
+import { EPaymentStatus } from '@domain/enums/EPaymentStatus';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, Repository } from 'typeorm';
@@ -17,6 +18,19 @@ export class PaymentService {
 	public async findOne(filters: FindOptionsWhere<Payment>) {
 		const payment = await this.repository.findOne({
 			where: filters,
+		});
+
+		if (!payment) {
+			throw new NotFoundException('Pagamento não encontrado.');
+		}
+
+		return payment;
+	}
+
+	public async findLastPaid(subscriptionId: string) {
+		const payment = await this.repository.findOne({
+			where: { subscriptionId, status: EPaymentStatus.CONFIRMED },
+			order: { createdAt: 'DESC' },
 		});
 
 		if (!payment) {

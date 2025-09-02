@@ -43,8 +43,13 @@ export class SubscriptionService {
 			);
 		}
 
+		await this.planService.findOne({ id: data.planId });
+
 		const subscription = this.repository.create({ ...data, customerId });
 		await this.repository.save(subscription);
+		await this.customerService.update(customerId, {
+			subscriptionId: subscription.id,
+		});
 
 		await this.createInitialPayment(subscription, data.method);
 
@@ -157,11 +162,14 @@ export class SubscriptionService {
 		return this.repository.save(subscription);
 	}
 
-	public async refund(id: string) {
-		const subscription = await this.repository.findOneBy({ id });
+	public async refund(customerId: string) {
+		const subscription = await this.repository.findOneBy({
+			customerId,
+			status: ESubscriptionStatus.ACTIVE,
+		});
 
 		if (!subscription) {
-			throw new NotFoundException('Assinatura não encontrada.');
+			throw new NotFoundException('Você não possui assinatura.');
 		}
 
 		const refundDeadline = addDays(subscription.startAt, 7);
@@ -172,7 +180,7 @@ export class SubscriptionService {
 			now.getTime() !== refundDeadline.getTime()
 		) {
 			throw new BadRequestException(
-				'O período de 7 dias para solicitar reembolso já encerrou.',
+				'O período de 7 dias para solicitar reembolso encerrou.',
 			);
 		}
 
@@ -185,7 +193,8 @@ export class SubscriptionService {
 
 		await this.repository.save(subscription);
 
-		const payment = await this.paymentService.findOne({ subscriptionId: id });
+		const payment = await this.paymentService.findLastPaid(subscription.id);
+
 		await this.paymentService.update(payment.id, {
 			status: EPaymentStatus.REFUNDED,
 			refundedAt: new Date(),

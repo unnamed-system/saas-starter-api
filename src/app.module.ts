@@ -9,9 +9,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CustomerModule } from './core/customer/customer.module';
 import { PaymentModule } from './core/payment/payment.module';
-import { WebhookModule } from './core/webhook/webhook.module';
-import { SubscriptionModule } from './core/subscription/subscription.module';
 import { PlanModule } from './core/plan/plan.module';
+import { SubscriptionModule } from './core/subscription/subscription.module';
+import { WebhookModule } from './core/webhook/webhook.module';
 
 @Module({
 	imports: [
@@ -30,7 +30,7 @@ import { PlanModule } from './core/plan/plan.module';
 				password: configService.get('database.password'),
 				database: 'saas_starter',
 				synchronize: true,
-				logging: true,
+				logging: false,
 				entities: [Customer, Payment, Plan, Subscription, WebhookLog],
 			}),
 		}),

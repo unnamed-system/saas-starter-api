@@ -1,13 +1,4 @@
-import {
-	Body,
-	Controller,
-	Get,
-	Headers,
-	Inject,
-	Param,
-	ParseUUIDPipe,
-	Post,
-} from '@nestjs/common';
+import { Body, Controller, Get, Headers, Inject, Post } from '@nestjs/common';
 import { ChangePlanDto } from './dto/change-plan.dto';
 import { CreateSubscriptionDto } from './dto/create-subscription.dto';
 import { SubscriptionService } from './subscription.service';
@@ -42,8 +33,8 @@ export class SubscriptionController {
 		return this.subscriptionService.changePlan(customerId, data);
 	}
 
-	@Post('refund/:id')
-	public refund(@Param('id', ParseUUIDPipe) id: string) {
-		return this.subscriptionService.refund(id);
+	@Post('refund')
+	public refund(@Headers('customerId') customerId: string) {
+		return this.subscriptionService.refund(customerId);
 	}
 }

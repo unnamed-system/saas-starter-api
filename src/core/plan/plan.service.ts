@@ -1,5 +1,5 @@
 import { Plan } from '@domain/entities/plan';
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { FindOptionsWhere, Repository } from 'typeorm';
 import { CreatePlanDto } from './dto/create-plan.dto';
@@ -14,7 +14,7 @@ export class PlanService {
 		});
 
 		if (!plan) {
-			throw new BadRequestException('Ocorreu um erro');
+			throw new NotFoundException('Plano não encontrado.');
 		}
 
 		return plan;
