@@ -12,6 +12,7 @@ import { PaymentModule } from './core/payment/payment.module';
 import { PlanModule } from './core/plan/plan.module';
 import { SubscriptionModule } from './core/subscription/subscription.module';
 import { WebhookModule } from './core/webhook/webhook.module';
+import { AuthModule } from './core/auth/auth.module';
 
 @Module({
 	imports: [
@@ -39,6 +40,7 @@ import { WebhookModule } from './core/webhook/webhook.module';
 		WebhookModule,
 		SubscriptionModule,
 		PlanModule,
+		AuthModule,
 	],
 })
 export class AppModule {}
