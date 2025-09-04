@@ -1,4 +1,12 @@
-import { Controller } from '@nestjs/common';
+import { Controller, Get, Inject } from '@nestjs/common';
+import { PlanService } from './plan.service';
 
-@Controller('plan')
-export class PlanController {}
+@Controller('plans')
+export class PlanController {
+	@Inject() private readonly planService: PlanService;
+
+	@Get()
+	public findAll() {
+		return this.planService.findAll();
+	}
+}

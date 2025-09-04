@@ -1,5 +1,6 @@
 import { EPaymentMethod } from '@domain/enums/EPaymentMethod';
 import { EPaymentStatus } from '@domain/enums/EPaymentStatus';
+import { EPaymentType } from '@domain/enums/EPaymentType';
 import {
 	Column,
 	CreateDateColumn,
@@ -15,6 +16,9 @@ import { Subscription } from './subscription';
 export class Payment {
 	@PrimaryGeneratedColumn('uuid')
 	id: string;
+
+	@Column({ type: 'enum', enum: EPaymentType })
+	type: EPaymentType;
 
 	@Column({ name: 'subscription_id', nullable: true })
 	subscriptionId?: string;
@@ -37,10 +41,10 @@ export class Payment {
 	@Column({ name: 'refunded_at', nullable: true, type: 'timestamptz' })
 	refundedAt?: Date;
 
-	@Column({ type: 'decimal', precision: 10, scale: 2, default: 0.0 })
-	value: number;
+	@Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
+	amount: number;
 
-	@Column({ type: 'decimal', precision: 10, scale: 2, default: 0.0 })
+	@Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
 	discount: number;
 
 	@Column({

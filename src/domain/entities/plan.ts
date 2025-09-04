@@ -1,4 +1,3 @@
-import { EPlanCycle } from '@domain/enums/EPlanCycle';
 import {
 	Column,
 	CreateDateColumn,
@@ -6,6 +5,7 @@ import {
 	OneToMany,
 	PrimaryGeneratedColumn,
 } from 'typeorm';
+import { PlanRecurrence } from './plan-recurrence';
 import { Subscription } from './subscription';
 
 @Entity('plans')
@@ -17,13 +17,7 @@ export class Plan {
 	name: string;
 
 	@Column({ type: 'jsonb', nullable: true })
-	details?: string[];
-
-	@Column({ type: 'enum', enum: EPlanCycle })
-	cycle: EPlanCycle;
-
-	@Column({ type: 'decimal', precision: 10, scale: 2, default: 0.0 })
-	amount: number;
+	benefits?: string[];
 
 	@Column({ type: 'bool', default: true })
 	active: boolean;
@@ -34,4 +28,7 @@ export class Plan {
 	// Relations
 	@OneToMany(() => Subscription, (subscription) => subscription.plan)
 	subscriptions: Subscription[];
+
+	@OneToMany(() => PlanRecurrence, (recurrence) => recurrence.plan)
+	recurrences: PlanRecurrence[];
 }

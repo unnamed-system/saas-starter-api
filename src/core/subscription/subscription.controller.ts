@@ -12,6 +12,11 @@ export class SubscriptionController {
 		return this.subscriptionService.find();
 	}
 
+	@Get('history')
+	public findSubscriptionHistory(@Headers('customerId') customerId: string) {
+		return this.subscriptionService.findSubscriptionHistory(customerId);
+	}
+
 	@Post('upgrade')
 	public upgrade(
 		@Headers('customerId') customerId: string,

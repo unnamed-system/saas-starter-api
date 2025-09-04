@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:latest
+    container_name: saas_starter_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: saas_starter
+    ports:
+      - '5432:5432'
+
+  redis:
+    image: redis:latest
+    container_name: saas_starter_redis
+    ports:
+      - '6379:6379'

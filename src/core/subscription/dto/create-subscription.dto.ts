@@ -13,6 +13,10 @@ export class CreateSubscriptionDto {
 	planId: number;
 
 	@IsNotEmpty()
+	@IsInt()
+	recurrenceId: number;
+
+	@IsNotEmpty()
 	@IsEnum(EPaymentMethod)
 	method: EPaymentMethod;
 

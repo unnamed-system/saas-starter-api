@@ -1,0 +1,4 @@
+export enum EPaymentType {
+	SUBSCRIPTION = 'SUBSCRIPTION',
+	DOWNLOAD = 'DOWNLOAD',
+}

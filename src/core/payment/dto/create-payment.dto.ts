@@ -1,5 +1,6 @@
 import { EPaymentMethod } from '@domain/enums/EPaymentMethod';
 import { EPaymentStatus } from '@domain/enums/EPaymentStatus';
+import { EPaymentType } from '@domain/enums/EPaymentType';
 import {
 	IsDateString,
 	IsDecimal,
@@ -18,8 +19,12 @@ export class CreatePaymentDto {
 	@IsEnum(EPaymentMethod)
 	method: EPaymentMethod;
 
+	@IsNotEmpty()
+	@IsEnum(EPaymentType)
+	type: EPaymentType;
+
 	@IsDecimal()
-	value: number;
+	amount: number;
 
 	@IsOptional()
 	@IsDecimal()

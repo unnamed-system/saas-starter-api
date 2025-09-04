@@ -1,10 +1,11 @@
 import { CustomerService } from '@core/customer/customer.service';
 import { PaymentService } from '@core/payment/payment.service';
+import { PlanRecurrenceService } from '@core/plan-recurrence/plan-recurrence.service';
 import { PlanService } from '@core/plan/plan.service';
 import { Subscription } from '@domain/entities/subscription';
 import { EPaymentMethod } from '@domain/enums/EPaymentMethod';
 import { EPaymentStatus } from '@domain/enums/EPaymentStatus';
-import { EPlanCycle } from '@domain/enums/EPlanCycle';
+import { EPaymentType } from '@domain/enums/EPaymentType';
 import { ESubscriptionStatus } from '@domain/enums/ESubscriptionStatus';
 import {
 	BadRequestException,
@@ -26,9 +27,35 @@ export class SubscriptionService {
 	@Inject() private readonly customerService: CustomerService;
 	@Inject() private readonly paymentService: PaymentService;
 	@Inject() private readonly planService: PlanService;
+	@Inject() private readonly planRecurrenceService: PlanRecurrenceService;
 
 	public async find() {
-		return this.repository.find();
+		return this.repository.find({
+			relations: ['recurrence', 'recurrence.plan'],
+		});
+	}
+
+	public async findSubscriptionHistory(customerId: string) {
+		const subscriptionHistory = this.repository
+			.createQueryBuilder('subscription')
+			.leftJoinAndSelect('subscription.recurrence', 'recurrence')
+			.leftJoinAndSelect('recurrence.plan', 'plan')
+			.where('subscription.customerId = :customerId', { customerId })
+			.select([
+				'subscription.id',
+				'subscription.customerId',
+				'subscription.status',
+				'subscription.startAt',
+				'subscription.endAt',
+				'subscription.canceledAt',
+				'subscription.createdAt',
+				'recurrence.cycle',
+				'recurrence.amount',
+				'plan.name',
+			])
+			.getMany();
+
+		return subscriptionHistory;
 	}
 
 	public async create(customerId: string, data: CreateSubscriptionDto) {
@@ -43,19 +70,27 @@ export class SubscriptionService {
 			);
 		}
 
-		await this.planService.findOne({ id: data.planId });
+		await this.planService.findById(data.planId);
+		const { amount } = await this.planRecurrenceService.findOne({
+			id: data.recurrenceId,
+			planId: data.planId,
+		});
 
-		const subscription = this.repository.create({ ...data, customerId });
+		const subscription = this.repository.create({
+			...data,
+			customerId,
+		});
+
 		await this.repository.save(subscription);
+		await this.createInitialPayment(subscription, data.method, amount);
 		await this.customerService.update(customerId, {
 			subscriptionId: subscription.id,
 		});
 
-		await this.createInitialPayment(subscription, data.method);
-
 		return subscription;
 	}
 
+	// Reescrever totalmente esse método de troca de plano ou recorrência
 	public async changePlan(customerId: string, data: ChangePlanDto) {
 		const activeSubscription = await this.repository.findOneBy({
 			customerId,
@@ -65,84 +100,21 @@ export class SubscriptionService {
 		if (!activeSubscription) {
 			throw new BadRequestException('Não possui assinatura ativa para trocar.');
 		}
-
-		const [{ method }, oldPlan, newPlan] = await Promise.all([
-			this.paymentService.findOne({
-				subscriptionId: activeSubscription.id,
-			}),
-			this.planService.findOne({
-				id: activeSubscription.planId,
-			}),
-			this.planService.findOne({
-				id: data.planId,
-			}),
-		]);
-
-		const now = new Date();
-		const oldStartAt = activeSubscription.startAt;
-
-		const oldEndOfCycle = this.calculatedueAt(oldStartAt, oldPlan.cycle);
-		const totalDays =
-			(oldEndOfCycle.getTime() - oldStartAt.getTime()) / (1000 * 60 * 60 * 24);
-
-		const remainingDays =
-			(oldEndOfCycle.getTime() - now.getTime()) / (1000 * 60 * 60 * 24);
-
-		const credit = (oldPlan.amount / totalDays) * remainingDays;
-		const newPlanAmount = newPlan.amount;
-		const valueToCharge =
-			Math.round(Math.max(newPlanAmount - credit, 0) * 100) / 100;
-		const discount = Math.round(Math.max(credit, 0) * 100) / 100;
-
-		this.repository.merge(activeSubscription, {
-			startAt: new Date(),
-			planId: data.planId,
-		});
-		await this.repository.save(activeSubscription);
-
-		await this.paymentService.create({
-			subscriptionId: activeSubscription.id,
-			method,
-			value: valueToCharge,
-			discount,
-			status: EPaymentStatus.PENDING,
-			dueAt: oldEndOfCycle,
-			notes: 'Troca de plano requisitada pelo usuário',
-		});
-
-		return activeSubscription;
 	}
 
 	private async createInitialPayment(
 		subscription: Subscription,
 		method: EPaymentMethod,
-		value?: number,
+		amount: number,
 	) {
-		const plan = await this.planService.findOne({ id: subscription.planId });
-
 		await this.paymentService.create({
 			subscriptionId: subscription.id,
 			method,
-			value: value ?? plan.amount,
+			amount,
 			status: EPaymentStatus.PENDING,
-			dueAt: this.calculatedueAt(subscription.startAt, plan.cycle),
+			dueAt: addDays(new Date(), 1),
+			type: EPaymentType.SUBSCRIPTION,
 		});
-	}
-
-	private calculatedueAt(startAt: Date, cycle: EPlanCycle): Date {
-		const due = new Date(startAt);
-		switch (cycle) {
-			case EPlanCycle.WEEKLY:
-				due.setDate(due.getDate() + 7);
-				break;
-			case EPlanCycle.MONTHLY:
-				due.setMonth(due.getMonth() + 1);
-				break;
-			case EPlanCycle.YEARLY:
-				due.setFullYear(due.getFullYear() + 1);
-				break;
-		}
-		return due;
 	}
 
 	public async cancel(customerId: string) {
@@ -170,6 +142,10 @@ export class SubscriptionService {
 
 		if (!subscription) {
 			throw new NotFoundException('Você não possui assinatura.');
+		}
+
+		if (!subscription.startAt) {
+			throw new BadRequestException('Não é possível solicitar reembolso.');
 		}
 
 		const refundDeadline = addDays(subscription.startAt, 7);

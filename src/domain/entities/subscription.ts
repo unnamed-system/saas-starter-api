@@ -12,6 +12,7 @@ import {
 import { Customer } from './customer';
 import { Payment } from './payment';
 import { Plan } from './plan';
+import { PlanRecurrence } from './plan-recurrence';
 
 @Entity('subscriptions')
 export class Subscription {
@@ -21,8 +22,11 @@ export class Subscription {
 	@Column({ name: 'customer_id' })
 	customerId: string;
 
-	@Column({ name: 'plan_id' })
+	@Column({ name: 'plan_id', type: 'smallint' })
 	planId: number;
+
+	@Column({ name: 'recurrence_id', type: 'smallint' })
+	recurrenceId: number;
 
 	@Column({
 		type: 'enum',
@@ -34,8 +38,8 @@ export class Subscription {
 	@Column({ type: 'bool', default: true })
 	renewal: boolean;
 
-	@Column({ name: 'start_at', type: 'timestamptz', default: new Date() })
-	startAt: Date;
+	@Column({ name: 'start_at', type: 'timestamptz', nullable: true })
+	startAt?: Date;
 
 	@Column({ name: 'end_at', type: 'timestamptz', nullable: true })
 	endAt?: Date;
@@ -63,4 +67,8 @@ export class Subscription {
 	@ManyToOne(() => Plan, (plan) => plan.subscriptions)
 	@JoinColumn({ name: 'plan_id', referencedColumnName: 'id' })
 	plan: Plan;
+
+	@ManyToOne(() => PlanRecurrence)
+	@JoinColumn({ name: 'recurrence_id', referencedColumnName: 'id' })
+	recurrence: PlanRecurrence;
 }
