@@ -5,21 +5,32 @@ import { PlanModule } from '@core/plan/plan.module';
 import { Subscription } from '@domain/entities/subscription';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { JobsModule } from 'src/jobs/jobs.module';
+
+import { SubscriptionExpirationListener } from './listeners/subscription-expiration.listener';
+import { SubscriptionRenewalListener } from './listeners/subscription-renewal.listener';
+import { SubscriptionRenewalProcessor } from './processors/subscription-renewal.processor';
 import { SubscriptionController } from './subscription.controller';
 import { SubscriptionListener } from './subscription.listener';
-import { SubscriptionProcessor } from './subscription.processor';
 import { SubscriptionService } from './subscription.service';
 
 @Module({
 	imports: [
 		TypeOrmModule.forFeature([Subscription]),
+		JobsModule,
 		CustomerModule,
 		PlanModule,
 		PlanRecurrenceModule,
 		PaymentModule,
 	],
 	controllers: [SubscriptionController],
-	providers: [SubscriptionService, SubscriptionListener, SubscriptionProcessor],
-	exports: [SubscriptionService],
+	providers: [
+		SubscriptionService,
+		SubscriptionListener,
+		SubscriptionExpirationListener,
+		SubscriptionRenewalListener,
+		SubscriptionRenewalProcessor,
+	],
+	exports: [SubscriptionService, SubscriptionRenewalProcessor],
 })
 export class SubscriptionModule {}

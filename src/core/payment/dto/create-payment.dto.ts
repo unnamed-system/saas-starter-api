@@ -11,9 +11,9 @@ import {
 } from 'class-validator';
 
 export class CreatePaymentDto {
-	@IsNotEmpty()
+	@IsOptional()
 	@IsUUID('4')
-	subscriptionId: string;
+	subscriptionId?: string;
 
 	@IsNotEmpty()
 	@IsEnum(EPaymentMethod)

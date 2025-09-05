@@ -46,7 +46,7 @@ export class SubscriptionService {
 				'subscription.customerId',
 				'subscription.status',
 				'subscription.startAt',
-				'subscription.endAt',
+				'subscription.nextPaymentAt',
 				'subscription.canceledAt',
 				'subscription.createdAt',
 				'recurrence.cycle',
@@ -71,14 +71,17 @@ export class SubscriptionService {
 		}
 
 		await this.planService.findById(data.planId);
-		const { amount } = await this.planRecurrenceService.findOne({
-			id: data.recurrenceId,
-			planId: data.planId,
-		});
+		const { amount, durationInDays } = await this.planRecurrenceService.findOne(
+			{
+				id: data.recurrenceId,
+				planId: data.planId,
+			},
+		);
 
 		const subscription = this.repository.create({
 			...data,
 			customerId,
+			nextPaymentAt: addDays(new Date(), durationInDays),
 		});
 
 		await this.repository.save(subscription);
@@ -164,7 +167,7 @@ export class SubscriptionService {
 			renewal: false,
 			canceledAt: now,
 			status: ESubscriptionStatus.CANCELED,
-			endAt: now,
+			nextPaymentAt: undefined,
 		});
 
 		await this.repository.save(subscription);
@@ -176,5 +179,16 @@ export class SubscriptionService {
 			refundedAt: new Date(),
 			notes: 'Reembolso solicitado pelo usuário',
 		});
+	}
+
+	public async update(id: string, data: Partial<Subscription>) {
+		const subscription = await this.repository.findOneBy({ id });
+
+		if (!subscription) {
+			throw new NotFoundException('Assinatura não encontrada');
+		}
+
+		this.repository.merge(subscription, data);
+		return this.repository.save(subscription);
 	}
 }

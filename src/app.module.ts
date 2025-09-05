@@ -5,12 +5,14 @@ import { DatabaseModule } from '@infrastructure/database/database.module';
 import { RedisModule } from '@infrastructure/redis/redis.module';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AuthModule } from './core/auth/auth.module';
 import { CustomerModule } from './core/customer/customer.module';
 import { PaymentModule } from './core/payment/payment.module';
 import { PlanModule } from './core/plan/plan.module';
 import { SubscriptionModule } from './core/subscription/subscription.module';
 import { WebhookModule } from './core/webhook/webhook.module';
+import { JobsModule } from './jobs/jobs.module';
 
 @Module({
 	imports: [
@@ -18,7 +20,9 @@ import { WebhookModule } from './core/webhook/webhook.module';
 			isGlobal: true,
 			load: [database, redis],
 		}),
+		EventEmitterModule.forRoot(),
 		DatabaseModule,
+		JobsModule,
 		RedisModule,
 		CustomerModule,
 		PaymentModule,

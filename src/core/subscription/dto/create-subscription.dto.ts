@@ -30,5 +30,5 @@ export class CreateSubscriptionDto {
 
 	@IsOptional()
 	@IsDateString()
-	endAt?: Date;
+	nextPaymentAt?: Date;
 }

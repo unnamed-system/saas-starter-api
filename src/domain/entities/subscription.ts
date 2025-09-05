@@ -41,11 +41,14 @@ export class Subscription {
 	@Column({ name: 'start_at', type: 'timestamptz', nullable: true })
 	startAt?: Date;
 
-	@Column({ name: 'end_at', type: 'timestamptz', nullable: true })
-	endAt?: Date;
+	@Column({ name: 'next_payment_at', type: 'timestamptz', nullable: true })
+	nextPaymentAt?: Date;
 
 	@Column({ name: 'canceled_at', type: 'timestamptz', nullable: true })
 	canceledAt?: Date;
+
+	@Column({ name: 'expiration_at', type: 'timestamptz', nullable: true })
+	expirationAt?: Date;
 
 	@Column({ name: 'external_id', nullable: true })
 	externalId?: string;
