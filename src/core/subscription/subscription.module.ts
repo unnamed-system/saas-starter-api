@@ -9,6 +9,7 @@ import { JobsModule } from 'src/jobs/jobs.module';
 
 import { SubscriptionExpirationConsumer } from './consumers/subscription-expiration.consumer';
 import { SubscriptionRenewalConsumer } from './consumers/subscription-renewal.consumer';
+import { SubscriptionAuthorizedListener } from './listeners/subscription-authorized.listener';
 import { SubscriptionExpirationListener } from './listeners/subscription-expiration.listener';
 import { SubscriptionRenewalListener } from './listeners/subscription-renewal.listener';
 import { SubscriptionController } from './subscription.controller';
@@ -28,6 +29,7 @@ import { SubscriptionService } from './subscription.service';
 		SubscriptionService,
 		SubscriptionExpirationListener,
 		SubscriptionRenewalListener,
+		SubscriptionAuthorizedListener,
 		SubscriptionExpirationConsumer,
 		SubscriptionRenewalConsumer,
 	],

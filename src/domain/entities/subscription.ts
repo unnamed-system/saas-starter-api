@@ -31,7 +31,7 @@ export class Subscription {
 	@Column({
 		type: 'enum',
 		enum: ESubscriptionStatus,
-		default: ESubscriptionStatus.ACTIVE,
+		default: ESubscriptionStatus.PENDING,
 	})
 	status: ESubscriptionStatus;
 

@@ -18,6 +18,7 @@ export class PaymentService {
 	public async findOne(filters: FindOptionsWhere<Payment>) {
 		const payment = await this.repository.findOne({
 			where: filters,
+			order: { createdAt: 'DESC' },
 		});
 
 		if (!payment) {

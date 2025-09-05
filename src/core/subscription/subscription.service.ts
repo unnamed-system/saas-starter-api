@@ -35,6 +35,20 @@ export class SubscriptionService {
 		});
 	}
 
+	public async findOne(filters: Partial<Subscription>) {
+		const subscription = await this.repository.findOne({
+			where: filters,
+			relations: ['recurrence'],
+			order: { createdAt: 'DESC' },
+		});
+
+		if (!subscription) {
+			throw new NotFoundException('Assinatura não encontrada.');
+		}
+
+		return subscription;
+	}
+
 	public async findSubscriptionHistory(customerId: string) {
 		const subscriptionHistory = this.repository
 			.createQueryBuilder('subscription')
