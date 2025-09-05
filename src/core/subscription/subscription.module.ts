@@ -7,11 +7,11 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JobsModule } from 'src/jobs/jobs.module';
 
+import { SubscriptionExpirationConsumer } from './consumers/subscription-expiration.consumer';
+import { SubscriptionRenewalConsumer } from './consumers/subscription-renewal.consumer';
 import { SubscriptionExpirationListener } from './listeners/subscription-expiration.listener';
 import { SubscriptionRenewalListener } from './listeners/subscription-renewal.listener';
-import { SubscriptionRenewalProcessor } from './processors/subscription-renewal.processor';
 import { SubscriptionController } from './subscription.controller';
-import { SubscriptionListener } from './subscription.listener';
 import { SubscriptionService } from './subscription.service';
 
 @Module({
@@ -26,11 +26,11 @@ import { SubscriptionService } from './subscription.service';
 	controllers: [SubscriptionController],
 	providers: [
 		SubscriptionService,
-		SubscriptionListener,
 		SubscriptionExpirationListener,
 		SubscriptionRenewalListener,
-		SubscriptionRenewalProcessor,
+		SubscriptionExpirationConsumer,
+		SubscriptionRenewalConsumer,
 	],
-	exports: [SubscriptionService, SubscriptionRenewalProcessor],
+	exports: [SubscriptionService],
 })
 export class SubscriptionModule {}

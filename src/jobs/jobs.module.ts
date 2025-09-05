@@ -1,9 +1,8 @@
-import { SubscriptionModule } from '@core/subscription/subscription.module';
+import { EQueue } from '@domain/enums/EQueue';
 import { BullModule } from '@nestjs/bullmq';
-import { forwardRef, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
-import { SubscriptionRenewalConsumer } from './consumers/subscription-renewal.consumer';
 import { SubscriptionExpirationCron } from './cron/subscription-expiration.cron';
 import { SubscriptionRenewalCron } from './cron/subscription-renewal.cron';
 import { JobsService } from './jobs.service';
@@ -21,19 +20,19 @@ import { JobsService } from './jobs.service';
 					username: configService.get('redis.username'),
 					password: configService.get('redis.password'),
 				},
+				defaultJobOptions: {
+					removeOnComplete: true,
+				},
 			}),
 		}),
 		BullModule.registerQueue({
-			name: 'subscription.renewal',
+			name: EQueue.SUBSCRIPTION_RENEWAL,
 		}),
-		forwardRef(() => SubscriptionModule),
+		BullModule.registerQueue({
+			name: EQueue.SUBSCRIPTION_EXPIRATION,
+		}),
 	],
-	providers: [
-		JobsService,
-		SubscriptionRenewalCron,
-		SubscriptionExpirationCron,
-		SubscriptionRenewalConsumer,
-	],
+	providers: [JobsService, SubscriptionRenewalCron, SubscriptionExpirationCron],
 	exports: [JobsService, BullModule],
 })
 export class JobsModule {}

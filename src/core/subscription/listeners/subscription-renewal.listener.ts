@@ -29,14 +29,18 @@ export class SubscriptionRenewalListener {
 			relations: ['recurrence', 'payments'],
 		});
 
+		if (!subscriptions.length) return;
+
 		for (const subscription of subscriptions) {
 			this.queue.add(EEvent.SUBSCRIPTION_RENEWAL, subscription);
 		}
 
-		if (subscriptions.length) {
-			this.logger.debug(
-				`${subscriptions.length} assinaturas alocadas na fila de renovação.`,
-			);
-		}
+		this.logger.debug(
+			`${
+				subscriptions.length > 1
+					? ` ${subscriptions.length} assinaturas`
+					: '1 assinatura'
+			} aguardando renovação.`,
+		);
 	}
 }
